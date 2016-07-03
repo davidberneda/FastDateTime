@@ -1,7 +1,7 @@
 # FastDateTime
 Optimized Delphi TDateTime functions
 
-- YearOf (aprox twice the speed)
+- YearOf (aprox 65% faster)
 
 
   
