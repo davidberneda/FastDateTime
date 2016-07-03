@@ -30,9 +30,17 @@ implementation
 uses
   System.Diagnostics, Tee.FastDateTime, DateUtils;
 
+function Diff(const ASlow,AFast:Int64):String;
+var tmp : Single;
+begin
+  tmp:=100-(AFast*100/ASlow);
+
+  result:='('+FormatFloat('0.##%',tmp)+' faster)';
+end;
+
 procedure TFormTest.TestYear(const D:TDateTime);
 var t1 : TStopwatch;
-    t2 : Int64;
+    t2,t3 : Int64;
     t : Integer;
     y : Word;
 begin
@@ -50,14 +58,14 @@ begin
   for t:=1 to 1000000 do
       y:=TFastDateTime.YearOf(D);
 
-  t2:=t1.ElapsedMilliseconds;
+  t3:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('Fast YearOf: '+t2.ToString+' msec '+y.ToString);
+  Memo1.Lines.Add('Fast YearOf: '+t3.ToString+' msec '+y.ToString+' '+Diff(t2,t3));
 end;
 
 procedure TFormTest.TestMonth(const D:TDateTime);
 var t1 : TStopwatch;
-    t2 : Int64;
+    t2, t3 : Int64;
     t : Integer;
     m : Word;
 begin
@@ -75,14 +83,14 @@ begin
   for t:=1 to 1000000 do
       m:=TFastDateTime.MonthOf(D);
 
-  t2:=t1.ElapsedMilliseconds;
+  t3:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('Fast MonthOf: '+t2.ToString+' msec '+m.ToString);
+  Memo1.Lines.Add('Fast MonthOf: '+t3.ToString+' msec '+m.ToString+' '+Diff(t2,t3));
 end;
 
 procedure TFormTest.TestDay(const D:TDateTime);
 var t1 : TStopwatch;
-    t2 : Int64;
+    t2,t3 : Int64;
     t : Integer;
     m : Word;
 begin
@@ -100,9 +108,9 @@ begin
   for t:=1 to 1000000 do
       m:=TFastDateTime.DayOf(D);
 
-  t2:=t1.ElapsedMilliseconds;
+  t3:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('Fast DayOf: '+t2.ToString+' msec '+m.ToString);
+  Memo1.Lines.Add('Fast DayOf: '+t3.ToString+' msec '+m.ToString+' '+Diff(t2,t3));
 end;
 
 procedure TFormTest.FormCreate(Sender: TObject);

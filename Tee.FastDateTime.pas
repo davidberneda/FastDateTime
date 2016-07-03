@@ -9,6 +9,12 @@ uses
 
 type
   TFastDateTime=record
+  private
+    const
+      D1 = 365;
+      D4 = D1 * 4 + 1;
+      D100 = D4 * 25 - 1;
+      D400 = D100 * 4 + 1;
   public
     class function DayOf(const DateTime: TTimeStamp): Word; overload; static;
     class function DayOf(const DateTime: TDateTime): Word; overload; inline; static;
@@ -22,6 +28,10 @@ type
 
 implementation
 
+const
+  MonthDays: TDayTable = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+  LeapMonthDays: TDayTable = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+
 procedure DivMod(Dividend: Integer; Divisor: Word; out Result, Remainder: Word); inline;
 begin
   Result    := Dividend div Divisor;
@@ -30,11 +40,6 @@ end;
 
 // Optimized from DateUtils.pas
 class function TFastDateTime.YearOf(const DateTime: TTimeStamp): Word;
-const
-  D1 = 365;
-  D4 = D1 * 4 + 1;
-  D100 = D4 * 25 - 1;
-  D400 = D100 * 4 + 1;
 var
   D, I: Word;
   T: Integer;
@@ -77,11 +82,6 @@ begin
 end;
 
 class function TFastDateTime.MonthOf(const DateTime: TTimeStamp): Word;
-const
-  D1 = 365;
-  D4 = D1 * 4 + 1;
-  D100 = D4 * 25 - 1;
-  D400 = D100 * 4 + 1;
 var
   Y, D, I: Word;
   T: Integer;
@@ -129,7 +129,7 @@ begin
     begin
       while True do
       begin
-        I := MonthDays[True,result];
+        I := LeapMonthDays[result];
         if D < I then Break;
         Dec(D, I);
         Inc(result);
@@ -139,7 +139,7 @@ begin
     begin
       while True do
       begin
-        I := MonthDays[False,result];
+        I := MonthDays[result];
         if D < I then Break;
         Dec(D, I);
         Inc(result);
@@ -150,16 +150,9 @@ begin
 end;
 
 class function TFastDateTime.DayOf(const DateTime: TTimeStamp): Word;
-const
-  D1 = 365;
-  D4 = D1 * 4 + 1;
-  D100 = D4 * 25 - 1;
-  D400 = D100 * 4 + 1;
 var
   Y, M, I: Word;
   T: Integer;
-  DayTable: PDayTable;
-  tmp : Boolean;
 begin
   T := DateTime.Date;
 
@@ -199,17 +192,27 @@ begin
 
     Inc(Y, I);
 
-    tmp:= IsLeapYear(Y);
-    DayTable := @MonthDays[tmp];
-
     M := 1;
 
-    while True do
+    if IsLeapYear(Y) then
     begin
-      I := DayTable^[M];
-      if result < I then Break;
-      Dec(result, I);
-      Inc(M);
+      while True do
+      begin
+        I := LeapMonthDays[M];
+        if result < I then Break;
+        Dec(result, I);
+        Inc(M);
+      end;
+    end
+    else
+    begin
+      while True do
+      begin
+        I := MonthDays[M];
+        if result < I then Break;
+        Dec(result, I);
+        Inc(M);
+      end;
     end;
 
     Inc(result);
