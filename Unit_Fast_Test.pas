@@ -38,6 +38,9 @@ begin
   result:='('+FormatFloat('0.##%',tmp)+' faster)';
 end;
 
+const
+  TestTimes=5000000;
+
 procedure TFormTest.TestYear(const D:TDateTime);
 var t1 : TStopwatch;
     t2,t3 : Int64;
@@ -46,7 +49,7 @@ var t1 : TStopwatch;
 begin
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
+  for t:=1 to TestTimes do
       y:=YearOf(D);
 
   t2:=t1.ElapsedMilliseconds;
@@ -55,7 +58,7 @@ begin
 
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
+  for t:=1 to TestTimes do
       y:=TFastDateTime.YearOf(D);
 
   t3:=t1.ElapsedMilliseconds;
@@ -67,50 +70,50 @@ procedure TFormTest.TestMonth(const D:TDateTime);
 var t1 : TStopwatch;
     t2, t3 : Int64;
     t : Integer;
-    m : Word;
+    day : Word;
 begin
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
-      m:=MonthOf(D);
+  for t:=1 to TestTimes do
+      day:=MonthOf(D);
 
   t2:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('MonthOf: '+t2.ToString+' msec '+m.ToString);
+  Memo1.Lines.Add('MonthOf: '+t2.ToString+' msec '+day.ToString);
 
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
-      m:=TFastDateTime.MonthOf(D);
+  for t:=1 to TestTimes do
+      day:=TFastDateTime.MonthOf(D);
 
   t3:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('Fast MonthOf: '+t3.ToString+' msec '+m.ToString+' '+Diff(t2,t3));
+  Memo1.Lines.Add('Fast MonthOf: '+t3.ToString+' msec '+day.ToString+' '+Diff(t2,t3));
 end;
 
 procedure TFormTest.TestDay(const D:TDateTime);
 var t1 : TStopwatch;
     t2,t3 : Int64;
     t : Integer;
-    m : Word;
+    day : Word;
 begin
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
-      m:=DayOf(D);
+  for t:=1 to TestTimes do
+      day:=DayOf(D);
 
   t2:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('DayOf: '+t2.ToString+' msec '+m.ToString);
+  Memo1.Lines.Add('DayOf: '+t2.ToString+' msec '+day.ToString);
 
   t1:=TStopwatch.StartNew;
 
-  for t:=1 to 1000000 do
-      m:=TFastDateTime.DayOf(D);
+  for t:=1 to TestTimes do
+      day:=TFastDateTime.DayOf(D);
 
   t3:=t1.ElapsedMilliseconds;
 
-  Memo1.Lines.Add('Fast DayOf: '+t3.ToString+' msec '+m.ToString+' '+Diff(t2,t3));
+  Memo1.Lines.Add('Fast DayOf: '+t3.ToString+' msec '+day.ToString+' '+Diff(t2,t3));
 end;
 
 procedure TFormTest.FormCreate(Sender: TObject);
