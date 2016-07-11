@@ -7,7 +7,8 @@ object FormTest: TFormTest
   ClientHeight = 320
   ClientWidth = 365
   OnCreate = FormCreate
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '1.7'
+  Visible = False
   object Button1: TButton
     Left = 21
     Height = 25

@@ -25,6 +25,7 @@ type
     { private declarations }
 
     procedure TestDay(const D:TDateTime);
+    procedure TestDayOfYear(const D:TDateTime);
     procedure TestMonth(const D:TDateTime);
     procedure TestYear(const D:TDateTime);
   public
@@ -155,6 +156,31 @@ begin
   Memo1.Lines.Add('Fast DayOf: '+IntToStr(t3)+' msec '+IntToStr(day)+' '+Diff(t2,t3));
 end;
 
+procedure TFormTest.TestDayOfYear(const D:TDateTime);
+var t1 : TStopwatch;
+    t2,t3 : Int64;
+    t : Integer;
+    day : Word;
+begin
+  t1:=TStopwatch.StartNew;
+
+  for t:=1 to TestTimes do
+      day:=DayOfTheYear(D);
+
+  t2:=t1.ElapsedMilliseconds;
+
+  Memo1.Lines.Add('DayOfYear: '+IntToStr(t2)+' msec '+IntToStr(day));
+
+  t1:=TStopwatch.StartNew;
+
+  for t:=1 to TestTimes do
+      day:=TFastDateTime.DayOfTheYear(D);
+
+  t3:=t1.ElapsedMilliseconds;
+
+  Memo1.Lines.Add('Fast DayOfYear: '+IntToStr(t3)+' msec '+IntToStr(day)+' '+Diff(t2,t3));
+end;
+
 procedure TFormTest.Button1Click(Sender: TObject);
 var D : TDateTime;
 begin
@@ -172,6 +198,10 @@ begin
   Memo1.Lines.Add('');
 
   TestDay(D);
+
+  Memo1.Lines.Add('');
+
+  TestDayOfYear(D);
 end;
 
 procedure TFormTest.Button2Click(Sender: TObject);
@@ -192,6 +222,9 @@ begin
     else
     if d<>TFastDateTime.DayOf(t) then
        raise Exception.Create('Wrong day: '+DateTimeToStr(t))
+    else
+    if DayOfTheYear(t)<>TFastDateTime.DayOfTheYear(t) then
+       raise Exception.Create('Wrong day of year: '+DateTimeToStr(t))
   end;
 
   LTest.Caption:='Ok';
