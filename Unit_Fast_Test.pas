@@ -3,13 +3,18 @@ unit Unit_Fast_Test;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
 
 type
   TFormTest = class(TForm)
     Memo1: TMemo;
+    Button1: TButton;
+    LTest: TLabel;
+    Button2: TButton;
     procedure FormCreate(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
 
@@ -116,9 +121,34 @@ begin
   Memo1.Lines.Add('Fast DayOf: '+t3.ToString+' msec '+day.ToString+' '+Diff(t2,t3));
 end;
 
-procedure TFormTest.FormCreate(Sender: TObject);
+procedure TFormTest.Button1Click(Sender: TObject);
+var t : Integer;
+    y,m,d : Word;
+begin
+  LTest.Caption:='';
+
+  for t:=1 to Round(EncodeDate(2100,12,31)) do
+  begin
+    DecodeDate(t,y,m,d);
+
+    if y<>TFastDateTime.YearOf(t) then
+       raise Exception.Create('Wrong year: '+DateTimeToStr(t))
+    else
+    if m<>TFastDateTime.MonthOf(t) then
+       raise Exception.Create('Wrong month: '+DateTimeToStr(t))
+    else
+    if d<>TFastDateTime.DayOf(t) then
+       raise Exception.Create('Wrong day: '+DateTimeToStr(t))
+  end;
+
+  LTest.Caption:='Ok';
+end;
+
+procedure TFormTest.Button2Click(Sender: TObject);
 var D : TDateTime;
 begin
+  Memo1.Clear;
+
   D:=Now;
   //D:=EncodeDate(1994,7,1);
 
@@ -131,6 +161,11 @@ begin
   Memo1.Lines.Add('');
 
   TestDay(D);
+end;
+
+procedure TFormTest.FormCreate(Sender: TObject);
+begin
+  Button2Click(Self);
 end;
 
 end.
