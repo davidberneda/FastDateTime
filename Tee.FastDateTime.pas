@@ -2,6 +2,10 @@
 // David Berneda @davidberneda July-2016
 unit Tee.FastDateTime;
 
+{$IFDEF FPC}
+{$MODE Delphi}
+{$ENDIF}
+
 // Important for speed:
 // When not debugging, always compile this unit with Optimization ON,
 // Inlining ON, and Range-checking, Overflow-checking, Assertions OFF
@@ -10,7 +14,13 @@ unit Tee.FastDateTime;
 interface
 
 uses
-  System.SysUtils;
+  {$IFDEF FPC}SysUtils{$ELSE}System.SysUtils{$ENDIF};
+
+// Speed optimization, use only the Date part of timestamp
+{$DEFINE DATESTAMP}
+
+// Speed optimization, use lookup tables instead of loops
+{$DEFINE LOOKUP}
 
 type
   TFastDateTime=record
@@ -22,64 +32,83 @@ type
       D400 = D100 * 4 + 1;
 
     class function CalcLeap(T: Integer; out D:Word): Boolean; static;
+
+    {$IFDEF DATESTAMP}
+    class function DateTimeToDateStamp(const DateTime: TDateTime): Integer; static;
+    {$ENDIF}
+
     class function DayMonth(const T:Integer; out M:Byte): Word; overload; static;
+
+    class function DayOf(const Date: Integer): Word; overload; static;
+    class function MonthOf(const Date: Integer): Byte; overload; static;
+    class function YearOf(Date: Integer): Word; overload; static;
   public
-    class function DayOf(const DateTime: TTimeStamp): Word; overload; static;
+    class function DayOf(const DateTime: TTimeStamp): Word; overload; inline; static;
     class function DayOf(const DateTime: TDateTime): Word; overload; inline; static;
 
-    class function MonthOf(const DateTime: TTimeStamp): Byte; overload; static;
+    class function MonthOf(const DateTime: TTimeStamp): Byte; overload; inline; static;
     class function MonthOf(const DateTime: TDateTime): Byte; overload; inline; static;
 
-    class function YearOf(const DateTime: TTimeStamp): Word; overload; static;
+    class function YearOf(const DateTime: TTimeStamp): Word; overload; inline; static;
     class function YearOf(const DateTime: TDateTime): Word; overload; inline; static;
   end;
 
 implementation
 
 uses
-  System.Math;
+  {$IFDEF FPC}Math{$ELSE}System.Math{$ENDIF};
 
 // Optimized from DateUtils.pas
-class function TFastDateTime.YearOf(const DateTime: TTimeStamp): Word;
+class function TFastDateTime.YearOf(Date: Integer): Word;
 var
   D, I: Word;
-  T: Integer;
 begin
-  T := DateTime.Date;
-
-  if T <= 0 then
+  if Date <= 0 then
      result:= 0
   else
   begin
-    Dec(T);
+    Dec(Date);
     result := 1;
 
-    while T >= D400 do
+    while Date >= D400 do
     begin
-      Dec(T, D400);
+      Dec(Date, D400);
       Inc(result, 400);
     end;
 
-    DivMod(T, D100, I, D);
+    DivMod(Date, D100, I, D);
 
-    if I = 4 then
+    if I>0 then
     begin
-      Dec(I);
-      Inc(D, D100);
+      if I = 4 then
+      begin
+        Dec(I);
+        Inc(D, D100);
+      end;
+
+      Inc(result, I * 100);
     end;
 
-    Inc(result, I * 100);
     DivMod(D, D4, I, D);
 
-    Inc(result, I * 4);
+    if I>0 then
+       Inc(result, I * 4);
 
     I := D div D1;
 
-    if I = 4 then
-       Dec(I);
+    if I>0 then
+    begin
+      if I = 4 then
+         Dec(I);
 
-    Inc(result, I);
+      Inc(result, I);
+    end;
   end;
+end;
+
+class function TFastDateTime.YearOf(const DateTime: TTimeStamp): Word;
+begin
+  result:=YearOf(DateTime.Date);
 end;
 
 class function TFastDateTime.CalcLeap(T: Integer; out D:Word): Boolean;
@@ -87,6 +116,9 @@ var I,
     Y : Word;
 begin
   Dec(T);
+
+  //Y:=400*(T div D400);
+  //T:=T mod D400;
 
   Y := 1;
 
@@ -98,29 +130,114 @@ begin
 
   DivMod(T, D100, I, D);
 
-  if I = 4 then
+  if I>0 then
   begin
-    Dec(I);
-    Inc(D, D100);
+    if I = 4 then
+    begin
+      Dec(I);
+      Inc(D, D100);
+    end;
+
+    Inc(Y, I * 100);
   end;
 
-  Inc(Y, I * 100);
   DivMod(D, D4, I, D);
-  Inc(Y, I * 4);
+
+  if I>0 then
+     Inc(Y, I * 4);
+
   DivMod(D, D1, I, D);
 
-  if I = 4 then
+  if I>0 then
   begin
-    Dec(I);
-    Inc(D, D1);
-  end;
+    if I = 4 then
+    begin
+      Dec(I);
+      Inc(D, D1);
+    end;
 
-  Inc(Y, I);
+    Inc(Y, I);
+  end;
 
   result:=IsLeapYear(Y);
 end;
 
+{$IFDEF LOOKUP}
+type
+  TLeapLookup=record
+  public
+    const Month:Array[0..365] of Byte=
+      (
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+        10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+        11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
+        12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12
+      );
+
+    const Day:Array[0..365] of Byte=
+      (
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+      );
+  end;
+
+  TLookup=record
+  public
+    const Month:Array[0..364] of Byte=
+      (
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+        10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+        11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
+        12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12
+      );
+
+    const Day:Array[0..364] of Byte=
+      (
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+      );
+  end;
+
+{$ENDIF}
+
 class function TFastDateTime.DayMonth(const T: Integer; out M:Byte): Word;
+{$IFNDEF LOOKUP}
 type
   TDayTable = array[1..12] of Byte;
 
@@ -129,11 +246,18 @@ const
   LeapMonthDays: TDayTable = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
 
 var I: Byte;
+{$ENDIF}
 begin
+  {$IFNDEF LOOKUP}
   M:=1;
+  {$ENDIF}
 
   if CalcLeap(T,result) then
   begin
+    {$IFDEF LOOKUP}
+    M:=TLeapLookup.Month[result];
+    result:=TLeapLookup.Day[result];
+    {$ELSE}
     while True do
     begin
       I := LeapMonthDays[M];
@@ -141,9 +265,14 @@ begin
       Dec(result, I);
       Inc(M);
     end;
+    {$ENDIF}
   end
   else
   begin
+    {$IFDEF LOOKUP}
+    M:=TLookup.Month[result];
+    result:=TLookup.Day[result];
+    {$ELSE}
     while True do
     begin
       I := MonthDays[M];
@@ -151,47 +280,77 @@ begin
       Dec(result, I);
       Inc(M);
     end;
+    {$ENDIF}
   end;
 
+  {$IFNDEF LOOKUP}
   Inc(result);
+  {$ENDIF}
+end;
+
+class function TFastDateTime.MonthOf(const Date: Integer): Byte;
+begin
+  if Date<=0 then
+     result:=0
+  else
+     DayMonth(Date,result);
 end;
 
 class function TFastDateTime.MonthOf(const DateTime: TTimeStamp): Byte;
-var T: Integer;
 begin
-  T:=DateTime.Date;
+  result:=MonthOf(DateTime.Date);
+end;
 
-  if T<=0 then
+class function TFastDateTime.DayOf(const Date: Integer): Word;
+var M: Byte;
+begin
+  if Date<=0 then
      result:=0
   else
-     DayMonth(T,result);
+     result:=DayMonth(Date,M);
 end;
 
 class function TFastDateTime.DayOf(const DateTime: TTimeStamp): Word;
-var T: Integer;
-    M: Byte;
 begin
-  T:=DateTime.Date;
-
-  if T<=0 then
-     result:=0
-  else
-     result:=DayMonth(T,M);
+  result:=DayOf(DateTime.Date);
 end;
+
+{$IFDEF DATESTAMP}
+class function TFastDateTime.DateTimeToDateStamp(const DateTime: TDateTime): Integer;
+const
+  FMSecsPerDay: Single = MSecsPerDay;
+  IMSecsPerDay: Integer = MSecsPerDay;
+
+begin
+  Result := DateDelta + (Round(DateTime * FMSecsPerDay) div IMSecsPerDay);
+end;
+{$ENDIF}
 
 class function TFastDateTime.DayOf(const DateTime: TDateTime): Word;
 begin
-  result:=DayOf(DateTimeToTimeStamp(DateTime));
+  {$IFDEF DATESTAMP}
+  result:=DayOf(DateTimeToDateStamp(DateTime));
+  {$ELSE}
+  result:=DayOf(DateTimeToTimeStamp(DateTime).Date);
+  {$ENDIF}
 end;
 
 class function TFastDateTime.MonthOf(const DateTime: TDateTime): Byte;
 begin
-  result:=MonthOf(DateTimeToTimeStamp(DateTime));
+  {$IFDEF DATESTAMP}
+  result:=MonthOf(DateTimeToDateStamp(DateTime));
+  {$ELSE}
+  result:=MonthOf(DateTimeToTimeStamp(DateTime).Date);
+  {$ENDIF}
 end;
 
 class function TFastDateTime.YearOf(const DateTime: TDateTime): Word;
 begin
-  result:=YearOf(DateTimeToTimeStamp(DateTime));
+  {$IFDEF DATESTAMP}
+  result:=YearOf(DateTimeToDateStamp(DateTime));
+  {$ELSE}
+  result:=YearOf(DateTimeToTimeStamp(DateTime).Date);
+  {$ENDIF}
 end;
 
 end.
