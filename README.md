@@ -10,6 +10,7 @@ Aproximate speed improvements, release-mode optimized compilation:
 |YearOf |45% faster|35% faster|
 |MonthOf|31% faster|0% *|
 |DayOf  |30% faster|0% *|
+|DayOfTheYear|55% faster|46% faster|
 
 * Lazarus RTL DateUtils functions are very fast, different algorithm
 
@@ -17,10 +18,12 @@ Aproximate speed improvements, release-mode optimized compilation:
 
 | Function | RAD 10.1 Berlin | Lazarus / FreePascal |
 |----------|-----------------|----------------------|
-|YearOf |69% faster|(not tested yet)|
-|MonthOf|45% faster|(not tested yet)|
-|DayOf  |46% faster|(not tested yet)|
+|YearOf |69% faster|(slower, FPC 62% faster)|
+|MonthOf|45% faster|(slower, FPC 200% faster)|
+|DayOf  |46% faster|(slower, FPC 200% faster)|
+|DayOfTheYear  |68% faster|(similar speed)|
 
+* Lazarus 64bit compiler gives faster execution 
 
 
 
