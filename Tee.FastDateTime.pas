@@ -31,6 +31,7 @@ type
       D100 = D4 * 25 - 1;
       D400 = D100 * 4 + 1;
 
+    class function CalcDayOfYear(T: Integer; out Y:Word): Word; static;
     class function CalcLeap(T: Integer; out D:Word): Boolean; static;
 
     {$IFDEF DATESTAMP}
@@ -40,11 +41,15 @@ type
     class function DayMonth(const T:Integer; out M:Byte): Word; overload; static;
 
     class function DayOf(const Date: Integer): Word; overload; static;
+    class function DayOfTheYear(const Date: Integer): Word; overload; static;
     class function MonthOf(const Date: Integer): Byte; overload; static;
     class function YearOf(Date: Integer): Word; overload; static;
   public
     class function DayOf(const DateTime: TTimeStamp): Word; overload; inline; static;
     class function DayOf(const DateTime: TDateTime): Word; overload; inline; static;
+
+    class function DayOfTheYear(const DateTime: TTimeStamp):Word; overload; inline; static;
+    class function DayOfTheYear(const DateTime: TDateTime):Word; overload; inline; static;
 
     class function MonthOf(const DateTime: TTimeStamp): Byte; overload; inline; static;
     class function MonthOf(const DateTime: TDateTime): Byte; overload; inline; static;
@@ -111,9 +116,8 @@ begin
   result:=YearOf(DateTime.Date);
 end;
 
-class function TFastDateTime.CalcLeap(T: Integer; out D:Word): Boolean;
-var I,
-    Y : Word;
+class function TFastDateTime.CalcDayOfYear(T: Integer; out Y: Word): Word;
+var I : Word;
 begin
   Dec(T);
 
@@ -128,37 +132,42 @@ begin
     Inc(Y, 400);
   end;
 
-  DivMod(T, D100, I, D);
+  DivMod(T, D100, I, result);
 
   if I>0 then
   begin
     if I = 4 then
     begin
       Dec(I);
-      Inc(D, D100);
+      Inc(result, D100);
     end;
 
     Inc(Y, I * 100);
   end;
 
-  DivMod(D, D4, I, D);
+  DivMod(result, D4, I, result);
 
   if I>0 then
      Inc(Y, I * 4);
 
-  DivMod(D, D1, I, D);
+  DivMod(result, D1, I, result);
 
   if I>0 then
   begin
     if I = 4 then
     begin
       Dec(I);
-      Inc(D, D1);
+      Inc(result, D1);
     end;
 
     Inc(Y, I);
   end;
+end;
 
+class function TFastDateTime.CalcLeap(T: Integer; out D:Word): Boolean;
+var Y : Word;
+begin
+  D:=CalcDayOfYear(T,Y);
   result:=IsLeapYear(Y);
 end;
 
@@ -315,6 +324,15 @@ begin
   result:=DayOf(DateTime.Date);
 end;
 
+class function TFastDateTime.DayOfTheYear(const Date: Integer): Word;
+var Y: Word;
+begin
+  if Date<=0 then
+     result:=0
+  else
+    result:=CalcDayOfYear(Date,Y)+1;
+end;
+
 {$IFDEF DATESTAMP}
 class function TFastDateTime.DateTimeToDateStamp(const DateTime: TDateTime): Integer;
 const
@@ -332,6 +350,20 @@ begin
   result:=DayOf(DateTimeToDateStamp(DateTime));
   {$ELSE}
   result:=DayOf(DateTimeToTimeStamp(DateTime).Date);
+  {$ENDIF}
+end;
+
+class function TFastDateTime.DayOfTheYear(const DateTime: TTimeStamp): Word;
+begin
+  result:=DayOfTheYear(DateTime.Date);
+end;
+
+class function TFastDateTime.DayOfTheYear(const DateTime: TDateTime): Word;
+begin
+  {$IFDEF DATESTAMP}
+  result:=DayOfTheYear(DateTimeToDateStamp(DateTime));
+  {$ELSE}
+  result:=DayOfTheYear(DateTimeToTimeStamp(DateTime).Date);
   {$ENDIF}
 end;
 
