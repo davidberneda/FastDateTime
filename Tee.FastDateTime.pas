@@ -11,6 +11,38 @@ unit Tee.FastDateTime;
 // Inlining ON, and Range-checking, Overflow-checking, Assertions OFF
 // {$O+,C-,R-,Q-}
 
+// Enable or disable fast methods
+{$DEFINE FASTDATE}
+
+{$IFDEF FASTDATE}
+
+ {$IFDEF CPUX64}
+
+  // 64bit
+
+  {$IFDEF FPC}
+   {$UNDEF FASTDATE} // FPC 64bit RTL is faster !
+  {$ELSE}
+   {$DEFINE FASTDAYOF}
+   {$DEFINE FASTMONTHOF}
+   {$DEFINE FASTDAYOFYEAR}
+   {$DEFINE FASTYEAROF}
+  {$ENDIF}
+ {$ELSE}
+
+  // 32bit
+
+  {$IFNDEF FPC}
+   {$DEFINE FASTDAYOF}
+   {$DEFINE FASTMONTHOF}
+  {$ENDIF}
+
+  {$DEFINE FASTDAYOFYEAR}
+  {$DEFINE FASTYEAROF}
+{$ENDIF}
+
+{$ENDIF}
+
 interface
 
 uses
@@ -25,6 +57,7 @@ uses
 type
   TFastDateTime=record
   private
+    {$IFDEF FASTDATE}
     const
       D1 = 365;
       D4 = D1 * 4 + 1;
@@ -44,24 +77,27 @@ type
     class function DayOfTheYear(const Date: Integer): Word; overload; static;
     class function MonthOf(const Date: Integer): Byte; overload; static;
     class function YearOf(Date: Integer): Word; overload; static;
+    {$ENDIF}
   public
+    {$IFDEF FASTDATE}
     class function DayOf(const DateTime: TTimeStamp): Word; overload; inline; static;
-    class function DayOf(const DateTime: TDateTime): Word; overload; inline; static;
-
     class function DayOfTheYear(const DateTime: TTimeStamp):Word; overload; inline; static;
-    class function DayOfTheYear(const DateTime: TDateTime):Word; overload; inline; static;
-
     class function MonthOf(const DateTime: TTimeStamp): Byte; overload; inline; static;
-    class function MonthOf(const DateTime: TDateTime): Byte; overload; inline; static;
-
     class function YearOf(const DateTime: TTimeStamp): Word; overload; inline; static;
+    {$ENDIF}
+
+    class function DayOf(const DateTime: TDateTime): Word; overload; inline; static;
+    class function DayOfTheYear(const DateTime: TDateTime):Word; overload; inline; static;
+    class function MonthOf(const DateTime: TDateTime): Byte; overload; inline; static;
     class function YearOf(const DateTime: TDateTime): Word; overload; inline; static;
   end;
 
 implementation
 
 uses
-  {$IFDEF FPC}Math{$ELSE}System.Math{$ENDIF};
+  {$IFDEF FPC}Math, DateUtils{$ELSE}System.Math{$ENDIF};
+
+{$IFDEF FASTDATE}
 
 // Optimized from DateUtils.pas
 class function TFastDateTime.YearOf(Date: Integer): Word;
@@ -344,44 +380,61 @@ begin
 end;
 {$ENDIF}
 
+class function TFastDateTime.DayOfTheYear(const DateTime: TTimeStamp): Word;
+begin
+  result:=DayOfTheYear(DateTime.Date);
+end;
+{$ENDIF}
+
 class function TFastDateTime.DayOf(const DateTime: TDateTime): Word;
 begin
+  {$IFDEF FASTDAYOF}
   {$IFDEF DATESTAMP}
   result:=DayOf(DateTimeToDateStamp(DateTime));
   {$ELSE}
   result:=DayOf(DateTimeToTimeStamp(DateTime).Date);
   {$ENDIF}
-end;
-
-class function TFastDateTime.DayOfTheYear(const DateTime: TTimeStamp): Word;
-begin
-  result:=DayOfTheYear(DateTime.Date);
+  {$ELSE}
+  result:={$IFNDEF FPC}System.{$ENDIF}DateUtils.DayOf(DateTime);
+  {$ENDIF}
 end;
 
 class function TFastDateTime.DayOfTheYear(const DateTime: TDateTime): Word;
 begin
+  {$IFDEF FASTDAYOFYEAR}
   {$IFDEF DATESTAMP}
   result:=DayOfTheYear(DateTimeToDateStamp(DateTime));
   {$ELSE}
   result:=DayOfTheYear(DateTimeToTimeStamp(DateTime).Date);
   {$ENDIF}
+  {$ELSE}
+  result:={$IFNDEF FPC}System.{$ENDIF}DateUtils.DayOfTheYear(DateTime);
+  {$ENDIF}
 end;
 
 class function TFastDateTime.MonthOf(const DateTime: TDateTime): Byte;
 begin
+  {$IFDEF FASTMONTHOF}
   {$IFDEF DATESTAMP}
   result:=MonthOf(DateTimeToDateStamp(DateTime));
   {$ELSE}
   result:=MonthOf(DateTimeToTimeStamp(DateTime).Date);
   {$ENDIF}
+  {$ELSE}
+  result:={$IFNDEF FPC}System.{$ENDIF}DateUtils.MonthOf(DateTime);
+  {$ENDIF}
 end;
 
 class function TFastDateTime.YearOf(const DateTime: TDateTime): Word;
 begin
+  {$IFDEF FASTYEAROF}
   {$IFDEF DATESTAMP}
   result:=YearOf(DateTimeToDateStamp(DateTime));
   {$ELSE}
   result:=YearOf(DateTimeToTimeStamp(DateTime).Date);
+  {$ENDIF}
+  {$ELSE}
+  result:={$IFNDEF FPC}System.{$ENDIF}DateUtils.YearOf(DateTime);
   {$ENDIF}
 end;
 
