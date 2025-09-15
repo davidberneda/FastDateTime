@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A29CBC14-5203-4374-84DC-B220BDF0DCAD}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Fast_DateTime_Test.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Fast_DateTime_Test_FMX.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Fast_DateTime_Test">
+        <MSBuild Projects="Fast_DateTime_Test.dproj"/>
+    </Target>
+    <Target Name="Fast_DateTime_Test:Clean">
+        <MSBuild Projects="Fast_DateTime_Test.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Fast_DateTime_Test:Make">
+        <MSBuild Projects="Fast_DateTime_Test.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Fast_DateTime_Test_FMX">
+        <MSBuild Projects="Fast_DateTime_Test_FMX.dproj"/>
+    </Target>
+    <Target Name="Fast_DateTime_Test_FMX:Clean">
+        <MSBuild Projects="Fast_DateTime_Test_FMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Fast_DateTime_Test_FMX:Make">
+        <MSBuild Projects="Fast_DateTime_Test_FMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Fast_DateTime_Test;Fast_DateTime_Test_FMX"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Fast_DateTime_Test:Clean;Fast_DateTime_Test_FMX:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Fast_DateTime_Test:Make;Fast_DateTime_Test_FMX:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

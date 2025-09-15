@@ -1,4 +1,4 @@
-unit Unit_Fast_Test;
+unit Unit_Fast_Test_FMX;
 
 {
   https://github.com/davidberneda/FastDateTime
@@ -7,17 +7,18 @@ unit Unit_Fast_Test;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Memo.Types,
+  FMX.ScrollBox, FMX.Memo, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects;
 
 type
   TFormTest = class(TForm)
-    Memo1: TMemo;
     Button1: TButton;
-    LTest: TLabel;
+    Memo1: TMemo;
     Button2: TButton;
-    procedure FormCreate(Sender: TObject);
+    Text1: TText;
     procedure Button1Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
@@ -35,7 +36,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.fmx}
 
 uses
   System.Diagnostics, Tee.FastDateTime, DateUtils;
@@ -152,35 +153,9 @@ begin
 end;
 
 procedure TFormTest.Button1Click(Sender: TObject);
-var t : Integer;
-    y,m,d : Word;
-begin
-  LTest.Caption:='';
-
-  for t:=1 to Round(EncodeDate(2100,12,31)) do
-  begin
-    DecodeDate(t,y,m,d);
-
-    if y<>TFastDateTime.YearOf(t) then
-       raise Exception.Create('Wrong year: '+DateTimeToStr(t))
-    else
-    if m<>TFastDateTime.MonthOf(t) then
-       raise Exception.Create('Wrong month: '+DateTimeToStr(t))
-    else
-    if d<>TFastDateTime.DayOf(t) then
-       raise Exception.Create('Wrong day: '+DateTimeToStr(t))
-    else
-    if DayOfTheYear(t)<>TFastDateTime.DayOfTheYear(t) then
-       raise Exception.Create('Wrong day of year: '+DateTimeToStr(t))
-  end;
-
-  LTest.Caption:='Ok';
-end;
-
-procedure TFormTest.Button2Click(Sender: TObject);
 var D : TDateTime;
 begin
-  Memo1.Clear;
+  Memo1.Text:='';
 
   D:=Now;
   //D:=EncodeDate(1994,7,1);
@@ -200,9 +175,35 @@ begin
   TestDayOfYear(D);
 end;
 
+procedure TFormTest.Button2Click(Sender: TObject);
+var t : Integer;
+    y,m,d : Word;
+begin
+  Text1.Text:='';
+
+  for t:=1 to Round(EncodeDate(2100,12,31)) do
+  begin
+    DecodeDate(t,y,m,d);
+
+    if y<>TFastDateTime.YearOf(t) then
+       raise Exception.Create('Wrong year: '+DateTimeToStr(t))
+    else
+    if m<>TFastDateTime.MonthOf(t) then
+       raise Exception.Create('Wrong month: '+DateTimeToStr(t))
+    else
+    if d<>TFastDateTime.DayOf(t) then
+       raise Exception.Create('Wrong day: '+DateTimeToStr(t))
+    else
+    if DayOfTheYear(t)<>TFastDateTime.DayOfTheYear(t) then
+       raise Exception.Create('Wrong day of year: '+DateTimeToStr(t))
+  end;
+
+  Text1.Text:='Ok';
+end;
+
 procedure TFormTest.FormCreate(Sender: TObject);
 begin
-  Button2Click(Self);
+  Button1Click(Self);
 end;
 
 end.
