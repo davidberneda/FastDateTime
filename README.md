@@ -1,5 +1,7 @@
 # FastDateTime
-Experimental optimized Delphi TDateTime functions
+Experimental optimized Delphi TDateTime functions.
+
+These functions are used in [TeeBI ultrafast queries](https://github.com/Steema/TeeBI) when filtering or grouping-by datetime fields of millions of records.
 
 Aproximate speed improvements, release-mode optimized compilation:
 
