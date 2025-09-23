@@ -5,7 +5,9 @@ These functions are used in [TeeBI ultrafast queries](https://github.com/Steema/
 
 Aproximate speed improvements, release-mode optimized compilation:
 
-32-bit x86 CPU (13th gen Intel), Windows 11:
+## Windows 11:
+
+32-bit x86 CPU (13th gen Intel):
 
 | Function | RAD 13.0 Florence | Lazarus / FreePascal |
 |----------|-----------------|----------------------|
@@ -18,7 +20,7 @@ Aproximate speed improvements, release-mode optimized compilation:
 
 #  
 
-64-bit CPU, Windows:
+64-bit CPU:
 
 | Function | RAD 13.0 Florence | Lazarus / FreePascal |
 |----------|-----------------|----------------------|
@@ -30,7 +32,18 @@ Aproximate speed improvements, release-mode optimized compilation:
 * Lazarus 64bit compiler gives faster execution 
 
 
+#
 
+## Linux Ubuntu 24.04.3 LTS
+
+64-bit CPU:
+
+| Function | RAD 13.0 Florence |
+|----------|-----------------|
+|YearOf |55% faster|
+|MonthOf|49% faster|
+|DayOf  |50% faster|
+|DayOfTheYear|74% faster|
 
 
   
