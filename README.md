@@ -47,3 +47,6 @@ Aproximate speed improvements, release-mode optimized compilation:
 
 
   
+<img width="895" height="747" alt="Screenshot from 2025-09-23 16-33-35" src="https://github.com/user-attachments/assets/9bec58f4-d0b8-4140-88a1-06d8d5eeabb6" />
+
+
