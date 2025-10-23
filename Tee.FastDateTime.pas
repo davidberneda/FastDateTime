@@ -366,7 +366,7 @@ begin
   if Date<=0 then
      result:=0
   else
-    result:=CalcDayOfYear(Date,Y)+1;
+     result:=CalcDayOfYear(Date,Y)+1;
 end;
 
 // It is faster to use Round than Trunc in 64 bits cpu,
@@ -376,17 +376,14 @@ end;
 {$ENDIF}
 
 {$IFDEF DATESTAMP}
-const
-  FMSecsPerDay: Single = MSecsPerDay;
-  IMSecsPerDay: Integer = MSecsPerDay;
-
 class function TFastDateTime.DateTimeToDateStamp(const DateTime: TDateTime): Integer;
 begin
-  {$IFDEF USEROUNDSTAMP}
-  Result := DateDelta + (Round(DateTime * FMSecsPerDay) div IMSecsPerDay);
-  {$ELSE}
-  Result := DateDelta + Trunc(DateTime);
-  {$ENDIF}
+  Result := DateDelta +
+    {$IFDEF USEROUNDSTAMP}
+    (Round(DateTime * MSecsPerDay) div MSecsPerDay);
+    {$ELSE}
+    Trunc(DateTime);
+    {$ENDIF}
 end;
 {$ENDIF}
 
