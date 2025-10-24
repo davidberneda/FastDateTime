@@ -369,6 +369,22 @@ begin
      result:=CalcDayOfYear(Date,Y)+1;
 end;
 
+// https://en.delphipraxis.net/topic/11175-x87-vs-sse-single-truncation/
+
+function FastRound(const Value: Single): Integer;
+asm
+  cvtss2si eax,Value
+  mov Result,eax
+end;
+
+function FastTrunc(const Value: Single): Integer;
+asm
+  {$IFDEF CPUX86}
+  movss xmm0, Value
+  {$ENDIF}
+  cvttss2si eax,xmm0
+end;
+
 // It is faster to use Round than Trunc in 64 bits cpu,
 // and the opposite, it is faster to use Trunc than Round in 32 bits cpu.
 {$IFDEF CPUX64}
